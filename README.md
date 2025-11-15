@@ -54,6 +54,26 @@ log-parser access.log --status 5xx
 log-parser app.log --level error --since "2024-01-01" --grep "payment" --format json
 ```
 
+## 開発
+
+### 前提条件
+- Rust 1.75+ がインストールされていること
+
+### ビルドとテスト
+```bash
+git clone <repository-url>
+cd log-parser
+
+# ビルド
+cargo build
+
+# テスト実行
+cargo test
+
+# フォーマット
+cargo fmt
+```
+
 ## インストール
 
 ```bash
