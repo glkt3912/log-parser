@@ -29,7 +29,7 @@ impl LogParser {
 
     pub fn run(&mut self) -> Result<()> {
         use crate::parsers::TextParser;
-        use crate::filters::LevelFilter;
+        use crate::filters::{LevelFilter, TimeFilter};
         use crate::output::{TextFormatter, json::JsonFormatter};
         use std::fs::File;
         use std::io::{BufRead, BufReader};
@@ -43,6 +43,22 @@ impl LogParser {
                 Ok(level) => Some(LevelFilter::new(level)),
                 Err(_) => {
                     eprintln!("警告: 無効なログレベル '{}' - フィルタなしで処理を続行", level_str);
+                    None
+                }
+            }
+        } else {
+            None
+        };
+
+        // Initialize time filter based on config
+        let time_filter = if self.config.since.is_some() || self.config.until.is_some() {
+            match TimeFilter::new(
+                self.config.since.as_deref(),
+                self.config.until.as_deref(),
+            ) {
+                Ok(filter) => Some(filter),
+                Err(e) => {
+                    eprintln!("警告: 時刻フィルタエラー: {} - 時刻フィルタなしで処理を続行", e);
                     None
                 }
             }
@@ -73,19 +89,36 @@ impl LogParser {
 
             match parser.parse_line(&line) {
                 Ok(Some(entry)) => {
+                    // Apply filters
+                    let mut should_include = true;
+
                     // Apply level filter if specified
-                    let should_include = if let Some(ref filter) = level_filter {
-                        match filter.apply(&entry) {
-                            Ok(result) => result,
-                            Err(e) => {
-                                eprintln!("フィルタエラー ({}行目): {}", line_count, e);
-                                error_count += 1;
-                                false
+                    if should_include {
+                        if let Some(ref filter) = level_filter {
+                            match filter.apply(&entry) {
+                                Ok(result) => should_include = result,
+                                Err(e) => {
+                                    eprintln!("レベルフィルタエラー ({}行目): {}", line_count, e);
+                                    error_count += 1;
+                                    should_include = false;
+                                }
                             }
                         }
-                    } else {
-                        true
-                    };
+                    }
+
+                    // Apply time filter if specified
+                    if should_include {
+                        if let Some(ref filter) = time_filter {
+                            match filter.apply(&entry) {
+                                Ok(result) => should_include = result,
+                                Err(e) => {
+                                    eprintln!("時刻フィルタエラー ({}行目): {}", line_count, e);
+                                    error_count += 1;
+                                    should_include = false;
+                                }
+                            }
+                        }
+                    }
 
                     if should_include {
                         parsed_entries.push(entry);
