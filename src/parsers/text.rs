@@ -37,7 +37,10 @@ impl Parser for TextParser {
         // Extract timestamp
         if let Some(captures) = self.timestamp_regex.captures(line) {
             if let Some(timestamp_str) = captures.get(1) {
-                if let Ok(timestamp) = timestamp_str.as_str().parse::<DateTime<Utc>>() {
+                let timestamp_str = timestamp_str.as_str();
+                // Try different timestamp formats
+                let timestamp = try_parse_timestamp(timestamp_str);
+                if let Some(timestamp) = timestamp {
                     entry = entry.with_timestamp(timestamp);
                 }
             }
@@ -66,4 +69,33 @@ impl Parser for TextParser {
     fn name(&self) -> &'static str {
         "text"
     }
+}
+
+// Helper function to try parsing different timestamp formats
+fn try_parse_timestamp(timestamp_str: &str) -> Option<DateTime<Utc>> {
+    let formats = [
+        "%Y-%m-%d %H:%M:%S",      // 2024-01-01 12:00:00
+        "%Y-%m-%dT%H:%M:%S",      // 2024-01-01T12:00:00
+        "%Y-%m-%d %H:%M:%SZ",     // 2024-01-01 12:00:00Z
+        "%Y-%m-%dT%H:%M:%SZ",     // 2024-01-01T12:00:00Z
+        "%Y-%m-%d %H:%M:%S%.3f",  // 2024-01-01 12:00:00.123
+        "%Y-%m-%dT%H:%M:%S%.3f",  // 2024-01-01T12:00:00.123
+    ];
+
+    // Try parsing with explicit timezone first
+    for format in &formats {
+        if let Ok(dt) = DateTime::parse_from_str(timestamp_str, format) {
+            return Some(dt.with_timezone(&Utc));
+        }
+    }
+
+    // Try parsing as naive datetime and assume UTC
+    use chrono::NaiveDateTime;
+    for format in &formats {
+        if let Ok(naive_dt) = NaiveDateTime::parse_from_str(timestamp_str, format) {
+            return Some(naive_dt.and_utc());
+        }
+    }
+
+    None
 }
