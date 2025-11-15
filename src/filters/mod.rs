@@ -12,3 +12,4 @@ pub mod regex_filter;
 pub mod time;
 
 pub use level::LevelFilter;
+pub use time::TimeFilter;
