@@ -31,3 +31,11 @@ spec/
 *.tmp
 *.temp
 /tmp/
+
+# Environment files and setup scripts (development environment specific)
+.env
+.env.local
+.env.production
+.env.*.local
+.secrets
+setup.sh

@@ -1,0 +1,14 @@
+# Rustfmt configuration for log-parser project (stable features only)
+
+# Basic formatting
+max_width = 100
+hard_tabs = false
+tab_spaces = 4
+
+# Import organization
+reorder_imports = true
+
+# Line breaking
+force_explicit_abi = true
+
+# Use only stable features to avoid warnings
