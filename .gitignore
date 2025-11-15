@@ -1,0 +1,33 @@
+# Rust
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and test files
+*.log
+test_logs/
+sample_logs/
+
+# SpecKit directory (仕様策定用)
+spec/
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
